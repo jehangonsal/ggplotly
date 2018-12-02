@@ -1,0 +1,28 @@
+### Code to make an animated graph of time series data
+
+library(datasets)
+library(tidyverse)
+library(plotly)
+
+data <- datasets::Seatbelts %>% 
+  as.data.frame() %>% 
+  mutate(Date = seq(as.Date("1969/1/1"), by = "month", length.out = 192))
+
+data %>% select(-Date) %>% cor() %>% corrplot(method = "circle")
+
+options(scipen = 999)
+
+plot <- data %>% 
+  select(-law) %>%
+  mutate_at(.vars = vars("drivers", "DriversKilled", "front", "kms", "PetrolPrice", "rear", "VanKilled"),
+            .funs = function(x){scale(x)}) %>%
+  gather(metric, value, -Date) %>%
+  ggplot(aes(x = Date, y = value)) + 
+  geom_smooth(span = .1, method = "loess", aes(frame = metric)) +
+  #geom_vline(xintercept = as.Date("1983-03-01"), aes(frame = metric)) + 
+  geom_point(aes(frame = metric)) + 
+  theme_bw() +
+  labs(title = "Interactive plot of key variables over time")
+
+
+ggplotly(plot)
